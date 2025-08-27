@@ -41,5 +41,5 @@ ehthumbs.db
 Thumbs.db
 
 # 项目生成的文件
-# output_json/
-# output_excel/
+output_json/
+output_excel/
