@@ -49,7 +49,7 @@ const userAgents = [
     const tasks = routes.map((url, idx) => limit(async () => {
         urlCounter++;
         if(urlCounter >= 0) {
-            console.log(`\n[${urlCounter}/${routes.length}] Processing: ${url}`);
+            // console.log(`\n[${urlCounter}/${routes.length}] Processing: ${url}`);
             let page;
             try {
                 page = await browser.newPage(); // 每个任务单独创建 page
@@ -58,7 +58,7 @@ const userAgents = [
                 // --- 每次请求前设置一个随机的 User-Agent ---
                 const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                 await page.setUserAgent(randomUserAgent);
-                console.log(`  -> Using User-Agent: ${randomUserAgent}`);
+                // console.log(`  -> Using User-Agent: ${randomUserAgent}`);
 
                 // --- 导航到页面 ---
                 await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }); // 增加超时时间
@@ -67,7 +67,7 @@ const userAgents = [
                 await page.waitForSelector('h1.ex-exhibitor-detail__title-headline', { timeout: 30000 });
                 
                 // --- 模拟人类行为：随机滚动 ---
-                console.log('  -> Simulating human scroll...');
+                // console.log('  -> Simulating human scroll...');
                 await page.evaluate(async () => {
                     await new Promise(resolve => {
                         let totalHeight = 0;
@@ -86,7 +86,7 @@ const userAgents = [
                 
                 // --- 增加一个更长的随机延迟，模拟阅读 ---
                 const randomDelay = 2000 + Math.random() * 3000; // 延迟2-5秒
-                console.log(`  -> Simulating reading time (${Math.round(randomDelay/1000)}s)...`);
+                // console.log(`  -> Simulating reading time (${Math.round(randomDelay/1000)}s)...`);
                 await sleep(randomDelay);
 
                 // --- 提取数据 ---
