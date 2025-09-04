@@ -84,7 +84,7 @@ async function extractMessefrankfurtData(page) {
     }
 }
 
-//暂时用不到:此网站有反爬虫机制，经常会重定向到首页
+//此网站的并发数建议限制在2
 async function extractAnugaData(page) {
     try {
         // 等待 ld+json script 加载
@@ -146,8 +146,81 @@ async function extractAnugaData(page) {
     }
 }
 
+async function extractThesmartere(page) {
+    try {
+        const data = await page.evaluate(() => {
+            const name = document.querySelector('h1')?.textContent?.trim() || '';
+            
+            // 获取所有 teaser-information div
+            const infoBlocks = document.querySelectorAll('.teaser-information');
+            
+            // 设置默认值
+            let telephone = 'N/A', 
+                email = 'N/A', 
+                website = 'N/A', 
+                addressLocality = 'N/A', 
+                products = 'N/A';
+
+            // 遍历所有 teaser-information 块
+            infoBlocks.forEach(block => {
+                // 检查是否是包含联系信息的块（通过查找dl元素）
+                const contactList = block.querySelector('dl.content-detail-texticon-block');
+                if (contactList) {
+                    const dts = contactList.querySelectorAll('dt');
+                    dts.forEach(dt => {
+                        const text = dt.textContent.trim();
+                        // 通过内容特征判断信息类型
+                        if (text.match(/^\+?\d[\d\s-]+$/)) {
+                            telephone = text;
+                        } else if (text.includes('@')) {
+                            email = text;
+                        } else if (text.includes('http')) {
+                            website = text;
+                        } else if (text.includes(',')) {
+                            // 提取地址中的城市/国家
+                            const addressLines = text.split(',');
+                            addressLocality = addressLines[addressLines.length - 1].trim();
+                        }
+                    });
+                }
+                
+                // 检查是否是包含产品信息的块（通过查找ul元素）
+                const productUl = block.querySelector('ul');
+                if (productUl) {
+                    const productItems = Array.from(productUl.querySelectorAll('li'))
+                        .map(li => li.textContent.trim())
+                        .filter(Boolean);
+                    products = productItems.join(', ');
+                }
+            });
+
+            return { name, telephone, email, website, addressLocality, products };
+        });
+
+        // 数据验证
+        if (!data.name) {
+            throw new Error('无法提取公司名称');
+        }
+
+        // 数据清洗
+        return {
+            ...data,
+            email: data.email.toLowerCase(),
+            telephone: data.telephone.replace(/\s+/g, ' ').trim(),
+            website: data.website.trim(),
+            addressLocality: data.addressLocality.trim(),
+            products: data.products || ''
+        };
+
+    } catch (error) {
+        console.error('数据提取错误:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     extractEurobikeData,
     extractMessefrankfurtData,
-    extractAnugaData
+    extractAnugaData,
+    extractThesmartere
 };
