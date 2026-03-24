@@ -243,19 +243,15 @@ async function extractEisenwarenData(page) {
             const addressParts = [street, postalCode, locality].filter(Boolean);
             const addressLocality = addressParts.join(', ');
 
-            // 提取产品列表（ul.level-1 内容是 JSON 数组文本）
+            // 提取产品列表（ul.level-1 > li > .acctitel 为顶级分类名称）
             let products = '';
             const productList = document.querySelector('.accordeonlist ul.level-1');
             if (productList) {
-                try {
-                    const productJson = JSON.parse(productList.textContent);
-                    const productTexts = productJson
-                        .map(item => item.text?.trim())
-                        .filter(Boolean);
-                    products = productTexts.join('; ');
-                } catch (e) {
-                    // JSON解析失败时降级为空
-                }
+                const topCategories = productList.querySelectorAll(':scope > li > .acctitel');
+                const productTexts = Array.from(topCategories)
+                    .map(el => el.textContent?.trim())
+                    .filter(Boolean);
+                products = productTexts.join('; ');
             }
 
             return { name, email, telephone, addressLocality, website, products };
