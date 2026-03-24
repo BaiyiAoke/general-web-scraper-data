@@ -42,7 +42,7 @@ const userAgents = [
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    const limit = pLimit(5); // 限制并发数量（Koelnmesse体系建议2）
+    const limit = pLimit(2); // 限制并发数量（Koelnmesse体系建议2）
 
     let urlCounter = 0;
     // 并发任务数组
