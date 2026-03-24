@@ -218,9 +218,73 @@ async function extractThesmartere(page) {
     }
 }
 
+//此网站的并发数建议限制在2（Koelnmesse体系）
+async function extractEisenwarenData(page) {
+    try {
+        // 等待 ld+json script 加载
+        await page.waitForSelector('script[type="application/ld+json"]', { timeout: 30000 });
+
+        const data = await page.evaluate(() => {
+            // 提取 JSON-LD 数据
+            const scriptTag = document.querySelector('script[type="application/ld+json"]');
+            const cleanedJsonText = scriptTag.textContent.replace(/\\(?!["\\\//bfnrtu])/g, '');
+            const jsonData = JSON.parse(cleanedJsonText);
+
+            // 基础信息提取
+            const name = (jsonData.name || '').trim();
+            const email = (jsonData.email || '').replace('mailto:', '').trim();
+            const telephone = (jsonData.telephone || '').trim();
+            const website = (jsonData.url || '').trim();
+
+            // 拼接完整地址: streetAddress, postalCode, addressLocality
+            const street = (jsonData.address?.streetAddress || '').trim();
+            const postalCode = (jsonData.address?.postalCode || '').trim();
+            const locality = (jsonData.address?.addressLocality || '').trim();
+            const addressParts = [street, postalCode, locality].filter(Boolean);
+            const addressLocality = addressParts.join(', ');
+
+            // 提取产品列表（ul.level-1 内容是 JSON 数组文本）
+            let products = '';
+            const productList = document.querySelector('.accordeonlist ul.level-1');
+            if (productList) {
+                try {
+                    const productJson = JSON.parse(productList.textContent);
+                    const productTexts = productJson
+                        .map(item => item.text?.trim())
+                        .filter(Boolean);
+                    products = productTexts.join('; ');
+                } catch (e) {
+                    // JSON解析失败时降级为空
+                }
+            }
+
+            return { name, email, telephone, addressLocality, website, products };
+        });
+
+        // 数据验证
+        if (!data.name) {
+            throw new Error('无法提取公司名称');
+        }
+
+        // 数据清洗
+        return {
+            ...data,
+            email: data.email.toLowerCase(),
+            telephone: data.telephone.replace(/\s+/g, ' ').trim(),
+            website: data.website.trim(),
+            products: data.products || ''
+        };
+
+    } catch (error) {
+        console.error('数据提取错误:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     extractEurobikeData,
     extractMessefrankfurtData,
     extractAnugaData,
-    extractThesmartere
+    extractThesmartere,
+    extractEisenwarenData
 };

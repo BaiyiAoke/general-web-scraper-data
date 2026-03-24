@@ -19,6 +19,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install Chromium system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64 libpangocairo-1.0-0 libatk1.0-0 libatk-bridge2.0-0 libcups2t64 libnss3 libxss1 libgtk-3-0
+
       - name: Install dependencies
         run: npm install
 

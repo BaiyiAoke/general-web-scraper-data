@@ -9,7 +9,7 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 // 引入提取器
-const { extractAnugaData,extractMessefrankfurtData,extractEurobikeData,extractThesmartere } = require('./extractors');
+const { extractAnugaData,extractMessefrankfurtData,extractEurobikeData,extractThesmartere,extractEisenwarenData } = require('./extractors');
 
 // --- 准备一些常见的 User-Agent ---
 const userAgents = [
@@ -33,7 +33,7 @@ const userAgents = [
         protocolTimeout: 60000
     });
 
-    const routes = JSON.parse(fs.readFileSync('./input_json/route_test.json', 'utf-8'));
+    const routes = JSON.parse(fs.readFileSync('./input_json/route_eisenwaren.json', 'utf-8'));
     const results = [];
     const failedUrls = [];
 
@@ -42,7 +42,7 @@ const userAgents = [
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    const limit = pLimit(5); // 限制并发数量
+    const limit = pLimit(2); // 限制并发数量（Koelnmesse体系建议2）
 
     let urlCounter = 0;
     // 并发任务数组
@@ -63,8 +63,8 @@ const userAgents = [
                 // --- 导航到页面 ---
                 await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }); // 增加超时时间
 
-                // --- 等待关键元素加载 (适用于eurobike和messefrankfurt)---
-                await page.waitForSelector('h1.ex-exhibitor-detail__title-headline', { timeout: 30000 });
+                // --- 等待关键元素加载 (适用于eisenwaren/koelnmesse)---
+                await page.waitForSelector('script[type="application/ld+json"]', { timeout: 30000 });
                 
                 // --- 模拟人类行为：随机滚动 ---
                 // console.log('  -> Simulating human scroll...');
@@ -90,20 +90,20 @@ const userAgents = [
                 await sleep(randomDelay);
 
                 // --- 提取数据 ---
-                const data = await extractMessefrankfurtData(page);
+                const data = await extractEisenwarenData(page);
 
                 if (!data.name) {
                     // 如果没有提取到名称，可能页面结构有变或被拦截
                     throw new Error('Could not extract the name. The page might be blocked or changed.');
                 }
                 results.push({...data,sourceUrl : url});
-                fs.writeFileSync('./output_json/excelData_messefrankfurt.json', JSON.stringify(results, null, 2), 'utf-8'); // 每次采集后保存
+                fs.writeFileSync('./output_json/excelData_eisenwaren.json', JSON.stringify(results, null, 2), 'utf-8'); // 每次采集后保存
                 console.log(`✅ Extracted: ${data.name}`);
 
             } catch (err) {
                 console.error(`❌ Failed to process ${url}:`, err.message);
                 failedUrls.push(url); // 将失败的URL记录下来
-                fs.writeFileSync('./output_json/failed_routes_messefrankfurt.json', JSON.stringify(failedUrls, null, 2));
+                fs.writeFileSync('./output_json/failed_routes_eisenwaren.json', JSON.stringify(failedUrls, null, 2));
             } finally {
                 if (page) await page.close(); // 关闭页面，释放资源
             }
@@ -136,9 +136,9 @@ const userAgents = [
         });
 
         // 写入文件
-        workbook.xlsx.writeFile('./output_excel/messefrankfurt_contact-info.xlsx')
+        workbook.xlsx.writeFile('./output_excel/eisenwaren_contact-info.xlsx')
             .then(() => {
-                console.log(`\n📦 Successfully exported ${results.length} records to messefrankfurt_contact-info.xlsx`);
+                console.log(`\n📦 Successfully exported ${results.length} records to eisenwaren_contact-info.xlsx`);
             })
             .catch(err => {
                 console.error('❌ Failed to write Excel file:', err);
@@ -151,6 +151,6 @@ const userAgents = [
     if (failedUrls.length > 0) {
         console.log(`\n⚠️ The following ${failedUrls.length} URLs failed and could be retried:`);
         console.log(failedUrls);
-        console.log('Failed URLs have been saved to failed_routes_messefrankfurt.json');
+        console.log('Failed URLs have been saved to failed_routes_eisenwaren.json');
     }
 })();
