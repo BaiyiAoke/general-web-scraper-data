@@ -28,16 +28,16 @@ jobs:
         run: npm install
 
       - name: Run scraper for website
-        run: node scraper.js
+        run: node src/scraper.js eisenwaren
 
-      - name: Upload output_json
+      - name: Upload output JSON
         uses: actions/upload-artifact@v4
         with:
           name: output_json
-          path: output_json/
+          path: data/output/json/
 
-      - name: Upload output_excel
+      - name: Upload output Excel
         uses: actions/upload-artifact@v4
         with:
           name: output_excel
-          path: output_excel/
+          path: data/output/excel/

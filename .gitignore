@@ -40,6 +40,5 @@ coverage/
 ehthumbs.db
 Thumbs.db
 
-# 项目生成的文件
-output_json/
-output_excel/
+# 项目生成的输出文件
+data/output/

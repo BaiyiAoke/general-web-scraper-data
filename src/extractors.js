@@ -1,4 +1,5 @@
-async function extractEurobikeData(page) {
+// Eurobike 和 MesseFrankfurt 共用同一套展商门户 DOM 结构
+async function extractExhibitorPortalData(page) {
     try {
         const data = await page.evaluate(() => {
             const name = document.querySelector('h1.ex-exhibitor-detail__title-headline')?.textContent?.trim() || '';
@@ -22,48 +23,6 @@ async function extractEurobikeData(page) {
             return { name, addressLocality, email, telephone, website, products };
         });
 
-        // 数据验证
-        if (!data.name) {
-            throw new Error('无法提取公司名称');
-        }
-
-        // 数据清洗
-        return {
-            ...data,
-            email: data.email.toLowerCase(),
-            telephone: data.telephone.replace(/\s+/g, ' ').trim(),
-            website: data.website.trim(),
-            products: data.products || ''
-        };
-
-    } catch (error) {
-        console.error('数据提取错误:', error);
-        throw error;
-    }
-}
-
-async function extractMessefrankfurtData(page) {
-    try {
-        const data = await page.evaluate(() => {
-            const name = document.querySelector('h1.ex-exhibitor-detail__title-headline')?.textContent?.trim() || '';
-
-            const addressBlock = document.querySelector('.ex-contact-box__address-field-full-address');
-            const addressText = addressBlock?.innerText?.trim() || '';
-            const addressLines = addressText.split('\n');
-            const addressLocality = addressLines[addressLines.length - 1] || '';
-
-            const emailLink = document.querySelector('.ex-contact-box__contact-btn')?.getAttribute('href') || '';
-            const email = emailLink.startsWith('mailto:') ? emailLink.split('mailto:')[1].split('?')[0] : '';
-
-            const website = document.querySelector('.ex-contact-box__website-link')?.getAttribute('href') || '';
-
-            const telephone = document.querySelector('.ex-contact-box__address-field-tel-number')?.textContent?.trim() || '';
-
-            const productElements = document.querySelectorAll('.ex-exhibitor-detail-categories .ex-list-toggle__list-item span');
-            const productsArray = Array.from(productElements).map(el => el.textContent.trim());
-            const products = productsArray.join(', ');
-            return { name, addressLocality, email, telephone, website, products };
-        });
         // 数据验证
         if (!data.name) {
             throw new Error('无法提取公司名称');
@@ -278,9 +237,11 @@ async function extractEisenwarenData(page) {
 }
 
 module.exports = {
-    extractEurobikeData,
-    extractMessefrankfurtData,
+    extractExhibitorPortalData,
+    // 向后兼容：旧名指向合并后的函数
+    extractEurobikeData: extractExhibitorPortalData,
+    extractMessefrankfurtData: extractExhibitorPortalData,
     extractAnugaData,
     extractThesmartere,
-    extractEisenwarenData
+    extractEisenwarenData,
 };
