@@ -59,6 +59,16 @@ module.exports = {
             concurrency: 3,
             waitSelector: 'h1.ex-exhibitor-detail__title-headline',
             worksheetName: 'Organizations',
+            // 路由采集配置（用于 route-scraper.js）
+            routeScraper: {
+                startUrl: 'https://eurobike.com/frankfurt/en/exhibitor-search.html?page=1&pagesize=90',
+                baseUrl: 'https://eurobike.com',
+                listItemSelector: 'a[href*="exhibitor-search.detail.html"]', // 等待列表链接出现
+                linkSelector: 'a[href*="exhibitor-search.detail.html"]',     // 展商详情链接
+                nextPageSelector: '.a-slide-nav--right',               // ⚠️ 需用 DevTools 验证此选择器
+                pageDelay: 3000,  // 翻页等待时间(ms)
+                maxPages: 20,     // 最大页数（当前约 9 页，留余量）
+            },
         },
         thesmartere: {
             inputFile: './data/routes/route_thesmartere.json',
