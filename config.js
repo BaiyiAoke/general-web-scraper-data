@@ -135,6 +135,7 @@ module.exports = {
         { header: 'Email', key: 'email', width: 35 },
         { header: 'Telephone', key: 'telephone', width: 20 },
         { header: 'Address', key: 'addressLocality', width: 40 },
+        { header: 'Country', key: 'country', width: 20 },
         { header: 'Website', key: 'website', width: 50 },
         { header: 'Products', key: 'products', width: 60 },
         { header: 'SourceUrl', key: 'sourceUrl', width: 60 },

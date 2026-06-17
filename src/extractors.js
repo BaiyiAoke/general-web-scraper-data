@@ -255,15 +255,23 @@ async function extractEurobikeData(page) {
             const street = (address.streetAddress || '').trim();
             const postalCode = (address.postalCode || '').trim();
             const locality = (address.addressLocality || '').trim();
-            const country = (address.addressCountry || '').trim();
-            const addressParts = [street, postalCode, locality, country].filter(Boolean);
+
+            // 国家从 DOM 最后一行获取（JSON-LD 只有国家代码）
+            const addressBlock = document.querySelector('.ex-contact-box__address-field-full-address');
+            const addressLines = (addressBlock?.innerHTML || '')
+                .split(/<br\s*\/?>/i)
+                .map(s => s.replace(/<[^>]+>/g, '').trim())
+                .filter(Boolean);
+            const country = addressLines[addressLines.length - 1] || '';
+
+            const addressParts = [street, postalCode, locality].filter(Boolean);
             const addressLocality = addressParts.join(', ');
 
             // 产品分类仍从 DOM 获取
             const productElements = document.querySelectorAll('.ex-exhibitor-detail-categories .ex-list-toggle__list-item span');
             const products = Array.from(productElements).map(el => el.textContent.trim()).join(', ');
 
-            return { name, email, telephone, website, addressLocality, products };
+            return { name, email, telephone, website, addressLocality, country, products };
         });
 
         if (!data.name) {
@@ -275,6 +283,7 @@ async function extractEurobikeData(page) {
             email: data.email.toLowerCase(),
             telephone: data.telephone.replace(/\s+/g, ' ').trim(),
             website: data.website.trim(),
+            country: data.country || '',
             products: data.products || ''
         };
 
