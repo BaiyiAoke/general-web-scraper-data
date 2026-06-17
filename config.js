@@ -57,7 +57,7 @@ module.exports = {
             outputFailed: './data/output/json/failed_routes_eurobike.json',
             excelFile: './data/output/excel/eurobike_contact-info.xlsx',
             concurrency: 3,
-            waitSelector: 'h1.ex-exhibitor-detail__title-headline',
+            waitSelector: 'script[type="application/ld+json"]',
             worksheetName: 'Organizations',
             // 路由采集配置（用于 route-scraper.js）
             routeScraper: {

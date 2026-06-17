@@ -236,10 +236,57 @@ async function extractEisenwarenData(page) {
     }
 }
 
+// Eurobike 使用 JSON-LD（ProfilePage > author）提取数据，产品仍走 DOM
+async function extractEurobikeData(page) {
+    try {
+        await page.waitForSelector('script[type="application/ld+json"]', { timeout: 30000 });
+
+        const data = await page.evaluate(() => {
+            const scriptTag = document.querySelector('script[type="application/ld+json"]');
+            const jsonData = JSON.parse(scriptTag.textContent);
+            const author = jsonData.author || {};
+            const address = author.address || {};
+
+            const name = (author.name || '').trim();
+            const email = (author.email || '').replace('mailto:', '').trim();
+            const telephone = (author.telephone || '').trim();
+            const website = (author.url || '').trim();
+
+            const street = (address.streetAddress || '').trim();
+            const postalCode = (address.postalCode || '').trim();
+            const locality = (address.addressLocality || '').trim();
+            const country = (address.addressCountry || '').trim();
+            const addressParts = [street, postalCode, locality, country].filter(Boolean);
+            const addressLocality = addressParts.join(', ');
+
+            // 产品分类仍从 DOM 获取
+            const productElements = document.querySelectorAll('.ex-exhibitor-detail-categories .ex-list-toggle__list-item span');
+            const products = Array.from(productElements).map(el => el.textContent.trim()).join(', ');
+
+            return { name, email, telephone, website, addressLocality, products };
+        });
+
+        if (!data.name) {
+            throw new Error('无法提取公司名称');
+        }
+
+        return {
+            ...data,
+            email: data.email.toLowerCase(),
+            telephone: data.telephone.replace(/\s+/g, ' ').trim(),
+            website: data.website.trim(),
+            products: data.products || ''
+        };
+
+    } catch (error) {
+        console.error('数据提取错误:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     extractExhibitorPortalData,
-    // 向后兼容：旧名指向合并后的函数
-    extractEurobikeData: extractExhibitorPortalData,
+    extractEurobikeData,
     extractMessefrankfurtData: extractExhibitorPortalData,
     extractAnugaData,
     extractThesmartere,
